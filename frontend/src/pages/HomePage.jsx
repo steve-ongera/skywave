@@ -48,8 +48,12 @@ export default function HomePage() {
 
   useEffect(() => {
     testimonialService.list({ is_featured: true }).then(({ data }) => {
-      setTestimonials(data.results || data);
-    }).catch(() => {});
+      // Normalize: paginated response has .results, plain response is an array
+      const list = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+      setTestimonials(list);
+    }).catch(() => {
+      setTestimonials([]);
+    });
   }, []);
 
   return (
@@ -167,7 +171,7 @@ export default function HomePage() {
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      {testimonials.length > 0 && (
+      {Array.isArray(testimonials) && testimonials.length > 0 && (
         <section className="section">
           <div className="container">
             <div className="text-center" style={{ marginBottom: '3rem' }}>

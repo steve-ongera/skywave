@@ -2,6 +2,7 @@ from pathlib import Path
 from decouple import config
 from datetime import timedelta
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,7 +17,7 @@ SECRET_KEY = 'django-insecure-g=@roq)5#jf#%3omvj=%4oeqm_x-0t-bl^4br4^@7=_vj_42n!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -116,30 +117,42 @@ USE_I18N = True
 USE_TZ = True
 
 
-# ---------------------------------------------------------------------------
-# Static & Media
-# ---------------------------------------------------------------------------
+# ── Static & Media ────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ---------------------------------------------------------------------------
-# CORS
-# ---------------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:5173,http://localhost:3000',
-    cast=lambda v: [s.strip() for s in v.split(',')]
+
+# ── CORS ──────────────────────────────────────────────────────────────────────
+# No python-decouple needed — uses plain os.environ with a safe hardcoded default.
+_cors_env = os.environ.get('CORS_ORIGINS', '')
+CORS_ALLOWED_ORIGINS = (
+    [o.strip() for o in _cors_env.split(',') if o.strip()]
+    if _cors_env
+    else [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:3000',
+    ]
 )
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
-# ---------------------------------------------------------------------------
-# DRF
-# ---------------------------------------------------------------------------
+
+# ── DRF ───────────────────────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -157,9 +170,8 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-# ---------------------------------------------------------------------------
-# JWT
-# ---------------------------------------------------------------------------
+
+# ── JWT ───────────────────────────────────────────────────────────────────────
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
@@ -168,9 +180,8 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# ---------------------------------------------------------------------------
-# DRF Spectacular (OpenAPI)
-# ---------------------------------------------------------------------------
+
+# ── OpenAPI docs ──────────────────────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
     'TITLE': 'SkyWave Insurance API',
     'DESCRIPTION': 'Fleet, Aircraft & Yacht Insurance Platform',
@@ -178,14 +189,7 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-# ---------------------------------------------------------------------------
-# Email (configure for production)
-# ---------------------------------------------------------------------------
+
+# ── Email ──────────────────────────────────────────────────────────────────────
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-# EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'noreply@skywave-insurance.com'
